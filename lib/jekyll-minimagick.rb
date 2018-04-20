@@ -12,7 +12,7 @@ module Jekyll
       #   +preset+ is the Preset hash from the config.
       #
       # Returns <GeneratedImageFile>
-      def initialize(site, base, dir, name, preset)
+      def initialize(site, base, dir, name, preset, f)
         @site = site
         @base = base
         @dir  = dir
@@ -20,6 +20,7 @@ module Jekyll
         @dst_dir = preset.delete('destination')
         @src_dir = preset.delete('source')
         @commands = preset
+        @f = f
       end
 
       # Obtains source file path by substituting the preset's source directory
@@ -27,7 +28,7 @@ module Jekyll
       #
       # Returns source file path.
       def path
-        File.join(@base, @dir.sub(@dst_dir, @src_dir), @name)
+        @f
       end
 
       # Use MiniMagick to create a derivative image at the destination
@@ -62,10 +63,15 @@ module Jekyll
       # for later processing.
       def generate(site)
         return unless site.config['mini_magick']
-
         site.config['mini_magick'].each_pair do |name, preset|
-          Dir.glob(File.join(site.source, preset['source'], "*.{png,jpg,jpeg,gif}")) do |source|
-            site.static_files << GeneratedImageFile.new(site, site.source, preset['destination'], File.basename(source), preset.clone)
+          # Find all the files first
+          files = []
+          Find.find(File.join(site.source, preset['source'])) do |path|
+            files << path if path =~ /.*\.png|jpg|jpeg|gif$/
+          end
+          # Generate
+          Dir.glob(files) do |f|
+            site.static_files << GeneratedImageFile.new(site, site.source, preset['destination'], File.basename(f), preset.clone, f)
           end
         end
       end
