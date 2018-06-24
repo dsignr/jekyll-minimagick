@@ -17,8 +17,11 @@ module Jekyll
         @base = base
         @dir  = dir
         @name = name
+        # Delete these as they are directly passed to image magick
         @dst_dir = preset.delete('destination')
+        @dst_sub_dir = preset.delete('destination_subfolder')
         @src_dir = preset.delete('source')
+        @src_sub_dir = preset.delete('source_subfolder')
         @commands = preset
         @f = f
       end
@@ -58,6 +61,17 @@ module Jekyll
     class MiniMagickGenerator < Generator
       safe true
 
+      # Utility function to generate the destination folder
+      def destination(f, preset)
+        folder_name = File.dirname(f)
+        # Remove everything before the project folder name
+        # Eg. Remove '/Users/nrk/Desktop/Projects/ecofactory.shop'
+        folder_name = folder_name.gsub! (Dir.pwd + "/"), ""
+        # Append the destination subfolder - inside the source folder
+        # KISS - Keep it simple, stupid
+        folder_name + "/" + preset["destination_subfolder"]
+      end
+
       # Find all image files in the source directories of the presets specified
       # in the site config.  Add a GeneratedImageFile to the static_files stack
       # for later processing.
@@ -67,11 +81,11 @@ module Jekyll
           # Find all the files first
           files = []
           Find.find(File.join(site.source, preset['source'])) do |path|
-            files << path if path =~ /.*\.png|jpg|jpeg|gif$/
+            files << path if path =~ /.*\.png|jpg|jpeg|gif$/ && path =~ /#{preset['source_subfolder']}/
           end
           # Generate
           Dir.glob(files) do |f|
-            site.static_files << GeneratedImageFile.new(site, site.source, preset['destination'], File.basename(f), preset.clone, f)
+            site.static_files << GeneratedImageFile.new(site, site.source, destination(f, preset), File.basename(f), preset.clone, f)
           end
         end
       end
