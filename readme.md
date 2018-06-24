@@ -1,3 +1,24 @@
+## What's different?
+
+This plugin will generate optimized images inside your source folder. Here's a sample config:
+
+```yaml
+# MiniMagick config
+mini_magick_config: &mini_magick_config
+  interlace: JPEG
+  colorspace: sRGB
+  source: assets/images/shop/products
+  destination_subfolder: optimized
+  quality: 80
+  sampling-factor: "4:2:0"
+
+mini_magick:
+  previews:
+    <<: *mini_magick_config
+    source_subfolder: previews
+    resize: "600x600"
+```
+
 MiniMagick integration for Jekyll
 =================================
 
